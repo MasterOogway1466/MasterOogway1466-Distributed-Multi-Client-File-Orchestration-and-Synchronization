@@ -1,2 +1,4 @@
-./.venv/
-./server_storage/
+.venv/
+server_storage/
+__pycache__/
+server_logs
