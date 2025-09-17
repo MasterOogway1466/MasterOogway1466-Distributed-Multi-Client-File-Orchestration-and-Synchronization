@@ -485,25 +485,27 @@ class Server:
                     self.shutdown_complete.set()
 
     def shutdown_server(self):
-        """
-        Shuts down the server gracefully.
-        """
+        """Graceful shutdown: stop accepting, close listeners, wait for handlers to finish."""
         print("[ALERT] Shutting down server...")
         self.running = False
-        self.active_connections=self.active_connections//2
 
+        # Close listening sockets so accept() stops (if stored as attributes)
+        try:
+            if hasattr(self, "data_sock"):
+                self.data_sock.close()
+            if hasattr(self, "greet_sock"):
+                self.greet_sock.close()
+        except Exception:
+            pass
+
+        # If no active connections, signal immediate completion
         with self.lock:
             if self.active_connections <= 0:
                 self.shutdown_complete.set()
 
-        # Periodically display what the server is waiting for
-        while not self.shutdown_complete.is_set():
-            with self.lock:
-                if self.active_connections <= 0:
-                    self.shutdown_complete.set()
-                    break
-            time.sleep(1)
-
+        # Wait for handlers to finish; handlers set shutdown_complete when count reaches 0
         self.shutdown_complete.wait()
+
+        # Stop executor (wait for tasks to finish)
         self.executor.shutdown(wait=True)
         print("[ALERT] Server shutdown complete.")
