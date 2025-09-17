@@ -249,7 +249,7 @@ class Server:
         self.greet_socket = None
         self.socks = []
         self.running = True
-        self.executor = ThreadPoolExecutor(5)
+        self.executor = ThreadPoolExecutor(max_workers=20)
         self.active_connections = 0
         self.lock = threading.Lock()
         self.shutdown_complete = threading.Event()
